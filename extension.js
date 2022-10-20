@@ -69,11 +69,13 @@ class Extension {
                     this._proxy.connect('g-properties-changed', () => this.sync());
                 this.sync();
             });
+        PowerToggle._proxy = this._proxy
         this.sync();
     }
 
     disable() {
         //Disconnect from our sync.
+        PowerToggle._proxy = null;
         this._proxy = null;
         //Reconnect with original _sync.
         PowerToggle._proxy = new PowerManagerProxy(Gio.DBus.system, BUS_NAME, OBJECT_PATH,
