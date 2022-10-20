@@ -1,0 +1,9 @@
+{
+  "name": "Battery time",
+  "description": "Show battery estimated remaining time",
+  "uuid": "batterytime@typeof.pw",
+  "shell-version": [
+    "43"
+  ],
+  "url": "https://github.com/pomoke/battery_time"
+}
