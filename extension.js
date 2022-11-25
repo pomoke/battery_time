@@ -102,6 +102,9 @@ class Extension {
         let chargingState = this._proxy.State === UPower.DeviceState.CHARGING
             ? '-charging' : '';
         let fillLevel = 10 * Math.floor(this._proxy.Percentage / 10);
+
+        let energyRate = this._proxy.get_cached_property('EnergyRate')?.unpack() || 0;
+
         const charged =
             this._proxy.State === UPower.DeviceState.FULLY_CHARGED ||
             (this._proxy.State === UPower.DeviceState.CHARGING && fillLevel === 100);
@@ -117,7 +120,7 @@ class Extension {
         let hours = remaining / 3600;
         let mins = remaining % 3600 / 60;
         PowerToggle.set({
-            label: remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage),
+            label: (remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage)) + "@" + _('%0.1fW').format(energyRate),
             fallback_icon_name: this._proxy.IconName,
             gicon,
         });
