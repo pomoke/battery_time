@@ -4,7 +4,7 @@ This extension serves as a replacement of battery remaining time,last seen in GN
 
 Remaining time is shown inline, so no additional menu item is created (currently).
 
-The extension only works on GNOME 43. Of course, previous GNOME versions don't need this extension.
+The extension works on GNOME 43 and 44 (needs more test). Of course, previous GNOME versions don't need this extension.
 
 ## License
 This program is distributed under the terms of the GNU General Public License, version 2 or later.
