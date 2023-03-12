@@ -18,35 +18,33 @@
 
 /* exported init */
 
-const GETTEXT_DOMAIN = 'battery-time-gettext';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import UPower from 'gi://UPowerGlib';
 
-const { Clutter, GObject, St, UPowerGlib: UPower, Gio } = imports.gi;
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { panel } from 'resource:///org/gnome/shell/ui/main.js';
+import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const System = imports.ui.main.panel.statusArea.quickSettings._system
-const Indicator = System._indicator
-const SystemMenu = System._systemItem
-const PowerToggle = SystemMenu._powerToggle
-
-
-const { loadInterfaceXML } = imports.misc.fileUtils;
+const System = panel.statusArea.quickSettings._system;
+const PowerToggle = System._systemItem._powerToggle;
 
 const BUS_NAME = 'org.freedesktop.UPower';
 const OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice';
+const GETTEXT_DOMAIN = "battery-time-gettext";
 
 const DisplayDeviceInterface = loadInterfaceXML('org.freedesktop.UPower.Device');
 const PowerManagerProxy = Gio.DBusProxy.makeProxyWrapper(DisplayDeviceInterface);
 
-const _ = ExtensionUtils.gettext;
 
 // See https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/gnome-42/js/ui/status/power.js.
-class Extension {
-    constructor(uuid) {
-        this._uuid = uuid;
-
-        ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
+export default class BatteryTimeExtension extends Extension {
+    constructor(metadata) {
+	super(metadata);
+	this.initTranslations(GETTEXT_DOMAIN);
     }
 
     enable() {
@@ -96,8 +94,9 @@ class Extension {
     // This function is derived from GNOME shell, because it's terrible to patch within a function
     sync() {
         PowerToggle.visible = this._proxy.IsPresent;
-        if (!PowerToggle.visible)
+        if (!PowerToggle.visible) {
             return;
+	}
         // The icons
         let chargingState = this._proxy.State === UPower.DeviceState.CHARGING
             ? '-charging' : '';
@@ -124,8 +123,4 @@ class Extension {
         System._percentageLabel.set_text(_('%d\u2009%%').format(this._proxy.Percentage))
     }
 
-}
-
-function init(meta) {
-    return new Extension(meta.uuid);
 }
