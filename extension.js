@@ -116,7 +116,7 @@ export default class BatteryTimeExtension extends Extension {
         let hours = remaining / 3600;
         let mins = remaining % 3600 / 60;
         PowerToggle.set({
-            label: remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage),
+            title: remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage),
             fallback_icon_name: this._proxy.IconName,
             gicon,
         });
