@@ -2,6 +2,7 @@
   "name": "Battery time",
   "description": "Show battery estimated remaining time",
   "uuid": "batterytime@typeof.pw",
+  "gettext-domain": "battery-time-gettext",
   "shell-version": [
     "45"
   ],

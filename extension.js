@@ -24,9 +24,8 @@ import GObject from 'gi://GObject';
 import St from 'gi://St';
 import UPower from 'gi://UPowerGlib';
 
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { panel } from 'resource:///org/gnome/shell/ui/main.js';
-import { gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 import { loadInterfaceXML } from 'resource:///org/gnome/shell/misc/fileUtils.js';
 
 const System = panel.statusArea.quickSettings._system;
@@ -34,7 +33,6 @@ const PowerToggle = System._systemItem._powerToggle;
 
 const BUS_NAME = 'org.freedesktop.UPower';
 const OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice';
-const GETTEXT_DOMAIN = "battery-time-gettext";
 
 const DisplayDeviceInterface = loadInterfaceXML('org.freedesktop.UPower.Device');
 const PowerManagerProxy = Gio.DBusProxy.makeProxyWrapper(DisplayDeviceInterface);
@@ -42,15 +40,10 @@ const PowerManagerProxy = Gio.DBusProxy.makeProxyWrapper(DisplayDeviceInterface)
 
 // See https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/gnome-42/js/ui/status/power.js.
 export default class BatteryTimeExtension extends Extension {
-    constructor(metadata) {
-	super(metadata);
-	this.initTranslations(GETTEXT_DOMAIN);
-    }
-
     enable() {
         //Stop original proxy
         PowerToggle._proxy = null;
-	//It's easier to use a new label than to unbind.
+        //It's easier to use a new label than to unbind.
         System._percentageLabel.destroy();
         System._percentageLabel = new St.Label({
             y_expand: true,
@@ -96,7 +89,7 @@ export default class BatteryTimeExtension extends Extension {
         PowerToggle.visible = this._proxy.IsPresent;
         if (!PowerToggle.visible) {
             return;
-	}
+        }
         // The icons
         let chargingState = this._proxy.State === UPower.DeviceState.CHARGING
             ? '-charging' : '';
