@@ -2,9 +2,9 @@
   "name": "Battery time",
   "description": "Show battery estimated remaining time",
   "uuid": "batterytime@typeof.pw",
+  "gettext-domain": "battery-time-gettext",
   "shell-version": [
-    "43",
-    "44"
+    "45"
   ],
   "url": "https://github.com/pomoke/battery_time"
 }

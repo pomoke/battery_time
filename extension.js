@@ -18,76 +18,56 @@
 
 /* exported init */
 
-const GETTEXT_DOMAIN = 'battery-time-gettext';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import UPower from 'gi://UPowerGlib';
 
-const { Clutter, GObject, St, UPowerGlib: UPower, Gio } = imports.gi;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const System = imports.ui.main.panel.statusArea.quickSettings._system
-const Indicator = System._indicator
-const SystemMenu = System._systemItem
-const PowerToggle = SystemMenu._powerToggle
-
-
-const { loadInterfaceXML } = imports.misc.fileUtils;
-
-const BUS_NAME = 'org.freedesktop.UPower';
-const OBJECT_PATH = '/org/freedesktop/UPower/devices/DisplayDevice';
-
-const DisplayDeviceInterface = loadInterfaceXML('org.freedesktop.UPower.Device');
-const PowerManagerProxy = Gio.DBusProxy.makeProxyWrapper(DisplayDeviceInterface);
-
-const _ = ExtensionUtils.gettext;
+import { panel } from 'resource:///org/gnome/shell/ui/main.js';
+import {
+    Extension,
+    InjectionManager,
+    gettext as _
+} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 // See https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/gnome-42/js/ui/status/power.js.
-class Extension {
-    constructor(uuid) {
-        this._uuid = uuid;
+export default class BatteryTimeExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
 
-        ExtensionUtils.initTranslations(GETTEXT_DOMAIN);
+        this._injectionManager = new InjectionManager();
     }
 
     enable() {
-        //Stop original proxy
-        PowerToggle._proxy = null;
-	//It's easier to use a new label than to unbind.
-        System._percentageLabel.destroy();
-        System._percentageLabel = new St.Label({
-            y_expand: true,
-            y_align: Clutter.ActorAlign.CENTER,
-        });
-        System.add_child(System._percentageLabel)
+        // FIXME: There should be a better way to monitor this.
+        const interval = setInterval(() => {
+            const System = panel.statusArea.quickSettings._system;
+            if (!System) return;
+            else clearInterval(interval);
 
-        //Run our proxy
-        this._proxy = new PowerManagerProxy(Gio.DBus.system, BUS_NAME, OBJECT_PATH,
-            (proxy, error) => {
-                if (error)
-                    console.error(error.message);
-                else
-                    this._proxy.connect('g-properties-changed', () => this.sync());
-                this.sync();
+            //It's easier to use a new label than to unbind.
+            System._percentageLabel.destroy();
+            System._percentageLabel = new St.Label({
+                y_expand: true,
+                y_align: Clutter.ActorAlign.CENTER,
             });
-        PowerToggle._proxy = this._proxy
-        this.sync();
+            System.add_child(System._percentageLabel)
+
+            // Override the sync method in powerToggle
+            const powerToggle = System._systemItem._powerToggle;
+            this._injectionManager.overrideMethod(powerToggle, '_sync',
+                originalMethod => this.sync.bind(powerToggle));
+            this.sync.call(powerToggle); // Synchronise once after override
+        }, 50);
     }
 
     disable() {
-        //Disconnect from our sync.
-        PowerToggle._proxy = null;
-        this._proxy = null;
-        //Reconnect with original _sync.
-        PowerToggle._proxy = new PowerManagerProxy(Gio.DBus.system, BUS_NAME, OBJECT_PATH,
-            (proxy, error) => {
-                if (error)
-                    console.error(error.message);
-                else
-                    PowerToggle._proxy.connect('g-properties-changed', () => PowerToggle._sync());
-                PowerToggle._sync();
-            });
+        this._injectionManager.clear();
         //Rebind property with battery %,we will use the label we allocated to continue,as we destroyed original percentageLabel.
-        PowerToggle.bind_property('label',
+        const System = panel.statusArea.quickSettings._system;
+        const powerToggle = System._systemItem._powerToggle;
+        powerToggle.bind_property('title',
             System._percentageLabel, 'text',
             GObject.BindingFlags.SYNC_CREATE);
     }
@@ -95,9 +75,10 @@ class Extension {
     // Show remaining time in quick menu.
     // This function is derived from GNOME shell, because it's terrible to patch within a function
     sync() {
-        PowerToggle.visible = this._proxy.IsPresent;
-        if (!PowerToggle.visible)
+        this.visible = this._proxy.IsPresent;
+        if (!this.visible) {
             return;
+        }
         // The icons
         let chargingState = this._proxy.State === UPower.DeviceState.CHARGING
             ? '-charging' : '';
@@ -116,16 +97,13 @@ class Extension {
         let remaining = (this._proxy.State === UPower.DeviceState.CHARGING) ? this._proxy.TimeToFull : this._proxy.TimeToEmpty
         let hours = remaining / 3600;
         let mins = remaining % 3600 / 60;
-        PowerToggle.set({
-            label: remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage),
+        this.set({
+            title: remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage),
             fallback_icon_name: this._proxy.IconName,
             gicon,
         });
+        const System = panel.statusArea.quickSettings._system;
         System._percentageLabel.set_text(_('%d\u2009%%').format(this._proxy.Percentage))
     }
 
-}
-
-function init(meta) {
-    return new Extension(meta.uuid);
 }
