@@ -36,15 +36,15 @@ export default class BatteryTimeExtension extends Extension {
     constructor(metadata) {
         super(metadata);
 
-        this._injectionManager = new InjectionManager();
     }
 
     enable() {
         // FIXME: There should be a better way to monitor this.
-        const interval = setInterval(() => {
+        this._injectionManager = new InjectionManager();
+        this.interval = setInterval(() => {
             const System = panel.statusArea.quickSettings._system;
             if (!System) return;
-            else clearInterval(interval);
+            else clearInterval(this.interval);
 
             //It's easier to use a new label than to unbind.
             System._percentageLabel.destroy();
@@ -64,6 +64,7 @@ export default class BatteryTimeExtension extends Extension {
 
     disable() {
         this._injectionManager.clear();
+        clearInterval(this.interval);
         //Rebind property with battery %,we will use the label we allocated to continue,as we destroyed original percentageLabel.
         const System = panel.statusArea.quickSettings._system;
         const powerToggle = System._systemItem._powerToggle;
