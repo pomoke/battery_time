@@ -106,7 +106,7 @@ export default class BatteryTimeExtension extends Extension {
         });
         const System = panel.statusArea.quickSettings._system;
         // Changed 9/6/24 this line below sets the text displayed on the DESKTOP top bar only
-        System._percentageLabel.set_text(remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage))
+        System._percentageLabel.set_text(remaining ? _('%dh %02dm').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage))
     }
 
 }
