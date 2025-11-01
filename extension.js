@@ -96,11 +96,25 @@ export default class BatteryTimeExtension extends Extension {
             name: icon,
             use_default_fallbacks: false,
         });
-        let remaining = (this._proxy.State === UPower.DeviceState.CHARGING) ? this._proxy.TimeToFull : this._proxy.TimeToEmpty
-        let hours = remaining / 3600;
-        let mins = remaining % 3600 / 60;
+        let remaining = this._proxy.State === UPower.DeviceState.CHARGING
+            ? this._proxy.TimeToFull
+            : this._proxy.TimeToEmpty;
+
+        let hours = Math.floor(remaining / 3600);
+        let mins = Math.floor((remaining % 3600) / 60);
+        let timeStr = '';
+
+        if (remaining > 0) {
+            if (hours > 0)
+                timeStr = _('%dh %02dm').format(hours, mins); // e.g. "2h 15m"
+            else
+                timeStr = _('%dm').format(mins); // e.g. "45m"
+        } else {
+            timeStr = _('%d\u2009%%').format(this._proxy.Percentage);
+        }
+
         this.set({
-            title: remaining ? _('%d:%02d').format(hours,mins) : _('%d\u2009%%').format(this._proxy.Percentage),
+            title: timeStr,
             fallback_icon_name: this._proxy.IconName,
             gicon,
         });
